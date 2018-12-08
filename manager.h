@@ -3,14 +3,20 @@
 
 #include <QWidget>
 #include <QtWidgets>
+#include <QDir>
+#include <QThreadPool>
+#include <QDebug>
+#include <QStringList>
 
-class Producer : public QWidget
+#include "downloader.h"
+
+class Manager : public QWidget
 {
     Q_OBJECT
 
 public:
-    Producer(QWidget *parent = nullptr);
-    ~Producer() = default;
+    Manager(QWidget *parent = nullptr);
+    ~Manager();
 
 protected:
     QLabel* startUrlLbl;
@@ -28,10 +34,19 @@ protected:
     QPushButton* pauseBtn;
 
     QTableWidget* tableWidget;
+    void creatTableWidget();
+    void initNewRowInTableWidget(const QString& name);
+
+    void downloadPage(const QString& name);
+
 public slots:
     void onStartBtnClick();
     void onStopBtnClick();
     void onPauseBtnClick();
-};
 
+    void onDownloadProgressChanged(qint64 part, qint64 max, QString url);
+    void onDownloadFinished(QString url);
+private:
+    QThreadPool* m_threadPoolForDownloads = QThreadPool::globalInstance();
+};
 #endif // PRODUCER_H
