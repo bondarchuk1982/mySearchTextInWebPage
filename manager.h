@@ -9,6 +9,7 @@
 #include <QStringList>
 
 #include "downloader.h"
+#include "producer.h"
 
 class Manager : public QWidget
 {
@@ -31,7 +32,6 @@ protected:
 
     QPushButton* startBtn;
     QPushButton* stopBtn;
-    QPushButton* pauseBtn;
 
     QTableWidget* tableWidget;
     void creatTableWidget();
@@ -42,11 +42,31 @@ protected:
 public slots:
     void onStartBtnClick();
     void onStopBtnClick();
-    void onPauseBtnClick();
 
-    void onDownloadProgressChanged(qint64 part, qint64 max, QString url);
-    void onDownloadFinished(QString url);
+    void onDownloadProgressChanged(qint64 part, qint64 max, const QString& url);
+    void onDownloadFinished(const QString& url);
+    void onSearchTextAndUrlsFinished(const QString& urlStr, const QStringList& newUrls, int count);
+    void onNetworkErrorCode(const QString& url, const QString& str);
 private:
+    void searchTextManager(const QStringList& newUrls);
+
     QThreadPool* m_threadPoolForDownloads = QThreadPool::globalInstance();
+    QThreadPool m_threadPoolForLocalSearch;
+
+    QSet<QString> m_downloadedUrls;
+    QQueue<QString> m_URLsForScan;
+
+    QString m_URLToScan;
+    QString m_targetText;
+
+    int m_maxURLCount = -1;
+    int m_maxThreadForDownloads = -1;
+    int m_totalDownloadUrls = 0;
+
+    bool m_stopped = false;
+
+    const QString urlPattern =
+          QString("(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?");
+
 };
 #endif // PRODUCER_H

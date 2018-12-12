@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QRunnable>
+#include <QNetworkReply>
 
 class DownLoader : public QObject, public QRunnable
 {
@@ -13,8 +14,12 @@ public:
     void run() override;
 
 signals:
-    void downloadProgressChanged(qint64 part, qint64 max, QString url);
-    void downloadFinished(QString url);
+    void downloadProgressChanged(qint64 part, qint64 max, const QString& url);
+    void downloadFinished(const QString& url);
+    void networkErrorStr(const QString& url, const QString& errorStr);
+
+public slots:
+    void onNetworkErrorCode(QNetworkReply::NetworkError error);
 
 private:
     void saveToFile(QNetworkReply *reply);

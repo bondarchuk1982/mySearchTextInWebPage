@@ -27,11 +27,15 @@ CONFIG += c++14
 SOURCES += \
         main.cpp \
     manager.cpp \
-    downloader.cpp
+    downloader.cpp \
+    scannerinline.cpp \
+    producer.cpp
 
 HEADERS += \
     manager.h \
-    downloader.h
+    downloader.h \
+    scannerinline.h \
+    producer.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
