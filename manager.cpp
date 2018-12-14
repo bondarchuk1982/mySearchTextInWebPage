@@ -6,10 +6,10 @@ Manager::Manager(QWidget *parent)
     , maxUrlsLbl(new QLabel("Максимальное количество сканируемых Url:"))
     , textForSearchLbl(new QLabel("Искомый текст:"))
     , maxThreadsLbl(new QLabel("Максимальное количество потоков:"))
-    , startUrlLEdit(new QLineEdit(""))
-    , maxUrlsLEdit(new QLineEdit(""))
-    , textForSearchLEdit(new QLineEdit(""))
-    , maxThreadsLEdit(new QLineEdit(""))
+    , startUrlLEdit(new QLineEdit("https://software.intel.com/ru-ru/articles/producer-consumer"))
+    , maxUrlsLEdit(new QLineEdit("10"))
+    , textForSearchLEdit(new QLineEdit("producer"))
+    , maxThreadsLEdit(new QLineEdit("8"))
     , startBtn(new QPushButton("Start"))
     , stopBtn(new QPushButton("Stop"))
     , tableWidget(new QTableWidget)
@@ -76,10 +76,11 @@ void Manager::creatTableWidget()
     this->tableWidget->setSelectionBehavior(QAbstractItemView::SelectRows);
     // Устанавливаем заголовки колонок
     this->tableWidget->setHorizontalHeaderLabels(headers);
+    this->tableWidget->setColumnWidth(0, 250);
     // Растягиваем последнюю колонку на всё доступное пространство
-    this->tableWidget->setColumnWidth(2, 250);
     this->tableWidget->horizontalHeader()->setStretchLastSection(true);
     this->tableWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    this->tableWidget->setItemDelegateForColumn(2, new ProgressBarDelegate);
 }
 void Manager::initNewRowInTableWidget(const QString &name)
 {
@@ -91,7 +92,7 @@ void Manager::initNewRowInTableWidget(const QString &name)
         switch (i) {
             case 0: item->setText(name); break;
             case 1: item->setText("Закачка."); break;
-            case 2: item->setText("?/?"); break;
+            case 2: item->setData(Qt::DisplayRole, 0); break;
             case 3: item->setText("0"); break;
             case 4: item->setText(""); break;
         }
@@ -154,6 +155,23 @@ void Manager::downloadPage(const QString &name)
 }
 void Manager::onDownloadProgressChanged(qint64 part, qint64 max, const QString& url)
 {
+    if (m_stopped || part == max) {
+        return;
+    }
+
+    for (int i = this->tableWidget->rowCount() - 1; i >= 0; --i) {
+        if(this->tableWidget->item(i, 0)->text() == url) {
+            if (this->tableWidget->item(i, 4)->text() != "") {
+                return;
+            }
+
+            this->tableWidget->item(i, 2)->setData(Qt::DisplayRole, part*100/max);
+            break;
+        }
+    }
+}
+void Manager::onDownloadFinished(const QString& url)
+{
     if (m_stopped) {
         return;
     }
@@ -164,19 +182,9 @@ void Manager::onDownloadProgressChanged(qint64 part, qint64 max, const QString& 
                 return;
             }
 
-            QString str = "";
-            part != max ? str = QString::number(part*100/max) + "%"
-                        : str = "100%";
-
-            this->tableWidget->setItem(i, 2, new QTableWidgetItem(str));
+            this->tableWidget->item(i, 2)->setData(Qt::DisplayRole, 100);
             break;
         }
-    }
-}
-void Manager::onDownloadFinished(const QString& url)
-{
-    if (m_stopped) {
-        return;
     }
 
     m_downloadedUrls.push_back(url);
@@ -207,18 +215,14 @@ void Manager::onSearchTextAndUrlsFinished(const QString& url, const QStringList&
         }
     }
 
-    searchTextManager(newUrls);
+    taskManager(newUrls);
 }
-void Manager::searchTextManager(const QStringList& newUrls)
+void Manager::taskManager(const QStringList& newUrls)
 {
     int uRLsCount = m_URLsForScan.size() + m_downloadedUrls.size() + m_threadPool->activeThreadCount();
 
     if (uRLsCount < m_maxURLCount && !newUrls.empty()) {
         for (const auto& str : newUrls) {
-            if (uRLsCount == m_maxURLCount) {
-                break;
-            }
-
             if (str == "" ||
                 m_URLsForScan.end()    != std::find(m_URLsForScan.begin(), m_URLsForScan.end(), str) ||
                 m_downloadedUrls.end() != std::find(m_downloadedUrls.begin(), m_downloadedUrls.end(), str)) {
@@ -227,15 +231,22 @@ void Manager::searchTextManager(const QStringList& newUrls)
 
             ++uRLsCount;
             m_URLsForScan.push_back(str);
+
+            if (uRLsCount == m_maxURLCount) {
+                break;
+            }
         }
     }
 
     while (m_threadPool->activeThreadCount() < m_maxThreads) {
-        if (m_URLsForScan.empty()) {
+        uRLsCount = m_downloadedUrls.size() + m_threadPool->activeThreadCount();
+
+        if (m_URLsForScan.empty() || uRLsCount == m_maxURLCount) {
             return;
         }
 
         downloadPage(m_URLsForScan.front());
+
         m_URLsForScan.pop_front();
     }
 }
@@ -245,13 +256,12 @@ void Manager::onNetworkErrorCode(const QString &url, const QString &str)
     for (int i = this->tableWidget->rowCount() - 1; i >= 0; --i) {
         if(this->tableWidget->item(i, 0)->text() == url) {
             this->tableWidget->setItem(i, 1, new QTableWidgetItem("Ошибка."));
-            this->tableWidget->setItem(i, 2, new QTableWidgetItem("Error!"));
             this->tableWidget->setItem(i, 4, new QTableWidgetItem(str));
 
             m_downloadedUrls.push_back(url);
 
             QStringList nullList;
-            searchTextManager(nullList);
+            taskManager(nullList);
 
             break;
         }

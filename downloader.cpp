@@ -15,26 +15,30 @@ void DownLoader::run()
     QEventLoop event;
 
     connect(*reply, &QNetworkReply::downloadProgress, [this](qint64 part, qint64 max) {
-        if (max != -1) {
-            emit downloadProgressChanged(part, max, m_urlStr);
+        if (max <= 0 || part <= 0) {
+            return;
         }
+
+        emit downloadProgressChanged(part, max, m_urlStr);
     });
     connect(*reply, &QNetworkReply::finished, [this, &event, &reply]() {
-        if ((*reply)->error() == QNetworkReply::NoError) {
+        if (!(*reply)->error() && !downloadAborted) {
             saveToFile(reply);
             emit downloadFinished(m_urlStr);
         }
 
         (*reply)->deleteLater();
+        (*reply) = nullptr;
         event.quit();
     });
     connect(*reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
             [this, &reply](QNetworkReply::NetworkError) {
         emit networkErrorStr(m_urlStr, (*reply)->errorString());
     });
-    connect(this, &DownLoader::downloadAbort, [&reply](){
+    connect(this, &DownLoader::downloadAbort, [this, &reply](){
         if ((*reply)->isRunning()) {
             (*reply)->abort();
+            downloadAborted = true;
         }
     });
 

@@ -29,13 +29,15 @@ SOURCES += \
     manager.cpp \
     downloader.cpp \
     scannerinline.cpp \
-    producer.cpp
+    producer.cpp \
+    progressbardelegate.cpp
 
 HEADERS += \
     manager.h \
     downloader.h \
     scannerinline.h \
-    producer.h
+    producer.h \
+    progressbardelegate.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
