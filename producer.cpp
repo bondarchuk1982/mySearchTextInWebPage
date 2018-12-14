@@ -12,10 +12,10 @@ void Producer::run()
         return;
     }
 
-    QByteArray data = m_inputFile.readAll();
+    auto data = m_inputFile.readAll();
 
-    QStringList scanResults = searchTargetInLine(QString(data));
-    QStringList newUrls = searchUrlsInLine(QString(data));
+    auto scanResults = searchTargetInLine(QString(data));
+    auto newUrls = searchUrlsInLine(QString(data));
     newUrls.removeDuplicates();
 
     emit searchTextAndUrlsRezult(m_urlStr, newUrls, scanResults.size());
@@ -32,7 +32,7 @@ bool Producer::openDownloadedUrl()
 
     m_inputFile.setFileName(fileName);
     if (!m_inputFile.open(QIODevice::ReadOnly)) {
-        qDebug().noquote() << "Ошибка! Не возможно прочитать файл " << m_inputFile.fileName();
+        qDebug().noquote()<< "Ошибка! Не возможно прочитать файл " << m_inputFile.fileName();
         return false;
     }
     return true;

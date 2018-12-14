@@ -1,6 +1,4 @@
 #include "scannerinline.h"
-#include <QRegularExpressionMatchIterator>
-#include <QVector>
 
 ScannerInLine::ScannerInLine(const QString& searchText, const QString& urlPattern)
   : m_targetTextExpr(searchText)
@@ -13,11 +11,11 @@ ScannerInLine::ScannerInLine(const QString& searchText, const QString& urlPatter
 
 QStringList ScannerInLine::searchTargetInLine(const QString& line)
 {
-    QRegularExpressionMatchIterator it = m_targetTextExpr.globalMatch(line);
+    auto it = m_targetTextExpr.globalMatch(line);
     QStringList foundPositions;
 
     while (it.hasNext()) {
-        QRegularExpressionMatch match = it.next();
+        auto match = it.next();
         foundPositions.append(QString::number(match.capturedStart() + 1));
     }
 
@@ -26,11 +24,11 @@ QStringList ScannerInLine::searchTargetInLine(const QString& line)
 
 QStringList ScannerInLine::searchUrlsInLine(const QString& line)
 {
-    QRegularExpressionMatchIterator it = m_urlExpr.globalMatch(line);
+    auto it = m_urlExpr.globalMatch(line);
     QStringList URLs;
 
     while (it.hasNext()) {
-        QRegularExpressionMatch match = it.next();
+        auto match = it.next();
         URLs.append(match.captured());
     }
 

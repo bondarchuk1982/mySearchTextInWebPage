@@ -23,17 +23,18 @@ protected:
     QLabel* startUrlLbl;
     QLabel* maxUrlsLbl;
     QLabel* textForSearchLbl;
-    QLabel* threadsPoolLbl;
+    QLabel* maxThreadsLbl;
 
     QLineEdit* startUrlLEdit;
     QLineEdit* maxUrlsLEdit;
     QLineEdit* textForSearchLEdit;
-    QLineEdit* threadsPoolLEdit;
+    QLineEdit* maxThreadsLEdit;
 
     QPushButton* startBtn;
     QPushButton* stopBtn;
 
     QTableWidget* tableWidget;
+
     void creatTableWidget();
     void initNewRowInTableWidget(const QString& name);
 
@@ -47,21 +48,22 @@ public slots:
     void onDownloadFinished(const QString& url);
     void onSearchTextAndUrlsFinished(const QString& urlStr, const QStringList& newUrls, int count);
     void onNetworkErrorCode(const QString& url, const QString& str);
+
+signals:
+    void downloadAbort();
+
 private:
     void searchTextManager(const QStringList& newUrls);
 
-    QThreadPool* m_threadPoolForDownloads = QThreadPool::globalInstance();
-    QThreadPool m_threadPoolForLocalSearch;
+    QThreadPool* m_threadPool = QThreadPool::globalInstance();
 
-    QSet<QString> m_downloadedUrls;
+    QVector<QString> m_downloadedUrls;
     QQueue<QString> m_URLsForScan;
 
-    QString m_URLToScan;
     QString m_targetText;
 
     int m_maxURLCount = -1;
-    int m_maxThreadForDownloads = -1;
-    int m_totalDownloadUrls = 0;
+    int m_maxThreads = -1;
 
     bool m_stopped = false;
 

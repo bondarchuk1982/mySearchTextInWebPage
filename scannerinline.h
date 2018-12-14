@@ -2,6 +2,7 @@
 
 #include <QObject>
 #include <QRegularExpression>
+#include <QRegularExpressionMatchIterator>
 
 class ScannerInLine
 {

@@ -4,6 +4,11 @@
 #include <QtNetwork/QNetworkAccessManager>
 #include <QRunnable>
 #include <QNetworkReply>
+#include <QEventLoop>
+#include <QThread>
+#include <QFile>
+#include <QFileInfo>
+
 
 class DownLoader : public QObject, public QRunnable
 {
@@ -17,12 +22,13 @@ signals:
     void downloadProgressChanged(qint64 part, qint64 max, const QString& url);
     void downloadFinished(const QString& url);
     void networkErrorStr(const QString& url, const QString& errorStr);
+    void downloadAbort();
 
 public slots:
-    void onNetworkErrorCode(QNetworkReply::NetworkError error);
+    void onDownloadAbort();
 
 private:
-    void saveToFile(QNetworkReply *reply);
+    void saveToFile(const std::unique_ptr<QNetworkReply*>& reply);
 
 private:
     QString m_urlStr;
